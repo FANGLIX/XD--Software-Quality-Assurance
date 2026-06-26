@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+.venv/
+.venv_real/
+data/
+*.pth
