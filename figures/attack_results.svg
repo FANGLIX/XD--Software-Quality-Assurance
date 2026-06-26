@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="500" viewBox="0 0 920 500">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="40" y="35" font-size="22" font-family="Arial, Microsoft YaHei" font-weight="700">真实 UCI HAR + PyTorch LSTM 对抗实验结果</text>
+<line x1="120" y1="420" x2="880" y2="420" stroke="#374151"/>
+<line x1="120" y1="70" x2="120" y2="420" stroke="#374151"/>
+<line x1="115" y1="420.0" x2="880" y2="420.0" stroke="#E5E7EB"/>
+<text x="75" y="425.0" font-size="13" font-family="Arial">0%</text>
+<line x1="115" y1="350.0" x2="880" y2="350.0" stroke="#E5E7EB"/>
+<text x="75" y="355.0" font-size="13" font-family="Arial">20%</text>
+<line x1="115" y1="280.0" x2="880" y2="280.0" stroke="#E5E7EB"/>
+<text x="75" y="285.0" font-size="13" font-family="Arial">40%</text>
+<line x1="115" y1="210.0" x2="880" y2="210.0" stroke="#E5E7EB"/>
+<text x="75" y="215.0" font-size="13" font-family="Arial">60%</text>
+<line x1="115" y1="140.0" x2="880" y2="140.0" stroke="#E5E7EB"/>
+<text x="75" y="145.0" font-size="13" font-family="Arial">80%</text>
+<line x1="115" y1="70.0" x2="880" y2="70.0" stroke="#E5E7EB"/>
+<text x="75" y="75.0" font-size="13" font-family="Arial">100%</text>
+<rect x="156" y="139.6" width="72" height="280.4" fill="#2563EB"/>
+<text x="192.0" y="131.6" font-size="13" text-anchor="middle" font-family="Arial">80.11%</text>
+<text x="192.0" y="442" font-size="12" text-anchor="middle" font-family="Arial, Microsoft YaHei">Clean</text>
+<rect x="280" y="207.7" width="72" height="212.3" fill="#DC2626"/>
+<text x="316.0" y="199.7" font-size="13" text-anchor="middle" font-family="Arial">60.67%</text>
+<text x="316.0" y="442" font-size="12" text-anchor="middle" font-family="Arial, Microsoft YaHei">FGSM</text>
+<rect x="404" y="210.8" width="72" height="209.2" fill="#B91C1C"/>
+<text x="440.0" y="202.8" font-size="13" text-anchor="middle" font-family="Arial">59.78%</text>
+<text x="440.0" y="442" font-size="12" text-anchor="middle" font-family="Arial, Microsoft YaHei">PGD</text>
+<rect x="528" y="203.8" width="72" height="216.2" fill="#EA580C"/>
+<text x="564.0" y="195.8" font-size="13" text-anchor="middle" font-family="Arial">61.78%</text>
+<text x="564.0" y="442" font-size="12" text-anchor="middle" font-family="Arial, Microsoft YaHei">Attention-FGSM</text>
+<rect x="652" y="213.1" width="72" height="206.9" fill="#059669"/>
+<text x="688.0" y="205.1" font-size="13" text-anchor="middle" font-family="Arial">59.11%</text>
+<text x="688.0" y="442" font-size="12" text-anchor="middle" font-family="Arial, Microsoft YaHei">FGSM+Smooth Defense</text>
+<rect x="776" y="217.4" width="72" height="202.6" fill="#047857"/>
+<text x="812.0" y="209.4" font-size="13" text-anchor="middle" font-family="Arial">57.89%</text>
+<text x="812.0" y="442" font-size="12" text-anchor="middle" font-family="Arial, Microsoft YaHei">PGD+Smooth Defense</text>
+<text x="40" y="470" font-size="14" font-family="Arial, Microsoft YaHei">指标：测试准确率；训练：2400 条真实样本，测试：900 条真实样本，6 epochs，CPU。</text>
+</svg>

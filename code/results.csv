@@ -1,0 +1,7 @@
+﻿scenario,epsilon,defense,accuracy,attack_success_rate,prediction_change_rate,note
+Clean,0.00,none,100.00,0.00,0.00,原始测试集
+FGSM eps=0.35,0.35,none,35.71,64.29,64.29,TorchAttacks FGSM 思路复现
+PGD eps=0.35,0.35,none,26.79,73.21,73.21,迭代攻击复现
+Attention-FGSM eps=0.35,0.35,none,53.57,46.43,46.43,改进：只扰动高敏感时间步
+FGSM + Smooth Defense,0.35,temporal_smoothing,33.33,66.67,66.67,防御对照：时序平滑提升有限
+PGD + Smooth Defense,0.35,temporal_smoothing,25.60,74.40,74.40,强攻击下防御不足

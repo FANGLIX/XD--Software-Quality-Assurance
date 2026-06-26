@@ -1,0 +1,7 @@
+﻿scenario,epsilon,defense,accuracy,attack_success_rate,prediction_change_rate,note
+Clean,0.0000,none,80.11,0.00,0.00,真实 UCI HAR Inertial Signals + LSTM
+FGSM,0.1200,none,60.67,39.33,21.00,单步梯度符号攻击
+PGD,0.1200,none,59.78,40.22,22.00,多步迭代攻击
+Attention-FGSM,0.1200,none,61.78,38.22,19.78,只扰动高敏感时间步
+FGSM + Smooth Defense,0.1200,temporal_smoothing,59.11,40.89,22.56,时序平滑防御对照
+PGD + Smooth Defense,0.1200,temporal_smoothing,57.89,42.11,23.89,强攻击下防御对照
