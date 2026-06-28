@@ -15,11 +15,12 @@ r"""
     读取 UCI HAR Dataset 的 Inertial Signals 原始 128 步、9 通道时序数据；
     训练 LSTM 分类器；
     评估 Clean / FGSM / PGD / Attention-FGSM / 平滑防御对照；
-    输出 results_real.csv 和 lstm_uci_har.pt。
+    输出 results_real.csv、attack_results.svg 和 lstm_uci_har.pt。
 """
 
 import argparse
 import csv
+import html
 import random
 from pathlib import Path
 
@@ -75,7 +76,9 @@ def find_data_root(user_root):
     candidates = []
     if user_root:
         candidates.append(Path(user_root))
+    script_dir = Path(__file__).resolve().parent
     candidates += [
+        script_dir.parent / "data" / "UCI HAR Dataset",
         Path(r"E:\软件质量保障\data\UCI HAR Dataset\UCI HAR Dataset"),
         Path(r"E:\软件质量保障\data\UCI HAR Dataset"),
         Path.cwd() / "UCI HAR Dataset",
@@ -228,15 +231,87 @@ def save_results(rows, out_path):
         writer.writerows(rows)
 
 
+def esc(text):
+    return html.escape(str(text), quote=False)
+
+
+BAR_COLORS = {
+    "Clean": "#2563EB",
+    "FGSM": "#DC2626",
+    "PGD": "#B91C1C",
+    "Attention-FGSM": "#EA580C",
+    "FGSM + Smooth Defense": "#059669",
+    "PGD + Smooth Defense": "#047857",
+}
+
+DISPLAY_LABELS = {
+    "FGSM + Smooth Defense": "FGSM+Smooth Defense",
+    "PGD + Smooth Defense": "PGD+Smooth Defense",
+}
+
+
+def save_results_svg(rows, out_path, caption):
+    left, right, top, bottom = 120, 880, 70, 420
+    chart_h = bottom - top
+    bar_w = 72
+    n = len(rows)
+    margin = 72
+    span = right - left - 2 * margin
+    if n <= 1:
+        centers = [(left + right) / 2]
+    else:
+        centers = [left + margin + i * span / (n - 1) for i in range(n)]
+
+    parts = [
+        '<svg xmlns="http://www.w3.org/2000/svg" width="920" height="500" viewBox="0 0 920 500">',
+        '<rect width="100%" height="100%" fill="#ffffff"/>',
+        f'<text x="40" y="35" font-size="22" font-family="Arial, Microsoft YaHei" font-weight="700">'
+        f'{esc("真实 UCI HAR + PyTorch LSTM 对抗实验结果")}</text>',
+        f'<line x1="{left}" y1="{bottom}" x2="{right}" y2="{bottom}" stroke="#374151"/>',
+        f'<line x1="{left}" y1="{top}" x2="{left}" y2="{bottom}" stroke="#374151"/>',
+    ]
+    for pct in range(0, 101, 20):
+        y = bottom - pct / 100 * chart_h
+        parts.append(f'<line x1="115" y1="{y:.1f}" x2="{right}" y2="{y:.1f}" stroke="#E5E7EB"/>')
+        parts.append(
+            f'<text x="75" y="{y + 5:.1f}" font-size="13" font-family="Arial">{esc(f"{pct}%")}</text>'
+        )
+
+    for row, cx in zip(rows, centers):
+        acc = float(row["accuracy"])
+        color = BAR_COLORS.get(row["scenario"], "#6B7280")
+        label = DISPLAY_LABELS.get(row["scenario"], row["scenario"])
+        bar_h = acc / 100 * chart_h
+        x = cx - bar_w / 2
+        y = bottom - bar_h
+        parts.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w}" height="{bar_h:.1f}" fill="{color}"/>')
+        parts.append(
+            f'<text x="{cx:.1f}" y="{y - 8:.1f}" font-size="13" text-anchor="middle" '
+            f'font-family="Arial">{esc(f"{acc:.2f}%")}</text>'
+        )
+        parts.append(
+            f'<text x="{cx:.1f}" y="442" font-size="12" text-anchor="middle" '
+            f'font-family="Arial, Microsoft YaHei">{esc(label)}</text>'
+        )
+
+    parts.append(
+        f'<text x="40" y="470" font-size="14" font-family="Arial, Microsoft YaHei">{esc(caption)}</text>'
+    )
+    parts.append("</svg>")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(parts), encoding="utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-root", default="", help="UCI HAR Dataset 根目录")
-    parser.add_argument("--epochs", type=int, default=6)
+    parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--hidden-dim", type=int, default=64)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--eps", type=float, default=0.12)
-    parser.add_argument("--train-limit", type=int, default=2400, help="为课堂复现实验限制训练样本数；设为0使用全部训练集")
+    parser.add_argument("--train-limit", type=int, default=0, help="为课堂复现实验限制训练样本数；设为0使用全部训练集")
     parser.add_argument("--test-limit", type=int, default=900, help="为课堂复现实验限制测试样本数；设为0使用全部测试集")
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--output-dir", default="", help="结果输出目录；为空时输出到脚本所在目录")
@@ -290,9 +365,28 @@ def main():
         for name, eps, defense, acc, asr, changed, note in rows
     ]
 
-    out_dir = Path(args.output_dir).resolve() if args.output_dir else Path(__file__).resolve().parent
+    script_dir = Path(__file__).resolve().parent
+    out_dir = Path(args.output_dir).resolve() if args.output_dir else script_dir
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    train_n = len(train_y)
+    test_n = len(test_y)
+    device_label = "CUDA" if torch.cuda.is_available() else "CPU"
+    train_desc = f"{train_n} 条" if args.train_limit else "全部"
+    test_desc = f"{test_n} 条" if args.test_limit else "全部"
+    svg_caption = (
+        f"指标：测试准确率；训练：{train_desc}真实样本，测试：{test_desc}真实样本，"
+        f"{args.epochs} epochs，eps={args.eps}，{device_label}。"
+    )
+
     save_results(dict_rows, out_dir / "results_real.csv")
+    svg_paths = [out_dir / "attack_results.svg"]
+    figures_dir = script_dir.parent / "figures"
+    if figures_dir != out_dir:
+        svg_paths.append(figures_dir / "attack_results.svg")
+    for svg_path in svg_paths:
+        save_results_svg(dict_rows, svg_path, svg_caption)
+
     checkpoint = {
         "model_state_dict": model.state_dict(),
         "args": vars(args),
@@ -305,6 +399,8 @@ def main():
     for row in dict_rows:
         print(row)
     print("\nsaved:", out_dir / "results_real.csv")
+    for svg_path in svg_paths:
+        print("saved:", svg_path)
     print("saved:", out_dir / "lstm_uci_har.pt")
 
 
